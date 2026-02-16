@@ -1,0 +1,72 @@
+# 规则触发器配置
+
+version: "1.0.0"
+last_updated: "2026-02-15"
+
+# 触发规则定义
+rules:
+  # ==================== 性能相关规则 ====================
+  - rule_id: API_PERF_001
+    name: "外部API高并发调用警告"
+    description: "检测到外部API的高并发调用场景"
+    severity: WARNING
+    
+    trigger:
+      type: function_call
+      patterns:
+        - pattern: "requests\\.(get|post|put|delete)"
+          context: 
+            loop: true
+            concurrent: true
+      keywords: ["external_api", "concurrent", "高并发", "批量"]
+    
+    action:
+      inject_message: |
+        ⚠️ 检测到外部API高并发调用，请参考以下最佳实践：
+        - 使用连接池控制并发数
+        - 实现重试和超时机制
+
+  # ==================== 安全相关规则 ====================
+  - rule_id: SEC_001
+    name: "SQL注入风险检测"
+    description: "检测到可能的SQL注入风险"
+    severity: CRITICAL
+    
+    trigger:
+      type: string_pattern
+      patterns:
+        - pattern: "f\".*SELECT.*{.*}.*\""
+          description: "f-string拼接SQL"
+      keywords: ["SELECT", "INSERT", "UPDATE", "DELETE", "DROP"]
+    
+    action:
+      inject_message: |
+        🚨 检测到SQL注入风险！请使用参数化查询
+
+  - rule_id: SEC_002
+    name: "敏感信息暴露检测"
+    description: "检测到可能的敏感信息硬编码"
+    severity: CRITICAL
+    
+    trigger:
+      type: content_pattern
+      patterns:
+        - pattern: "password\\s*=\\s*[\"'][^\"']+[\"']"
+          description: "密码硬编码"
+    
+    action:
+      inject_message: |
+        🚨 检测到敏感信息硬编码！请使用环境变量
+
+# 触发器索引（用于快速匹配）
+trigger_index:
+  by_keyword:
+    "SELECT": [SEC_001]
+    "password": [SEC_002]
+
+# 配置
+config:
+  match_mode: "semantic"
+  auto_learn: true
+  max_message_length: 500
+  cooldown_seconds: 60

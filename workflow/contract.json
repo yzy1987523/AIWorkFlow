@@ -1,0 +1,159 @@
+{
+  "contract_id": "CONTRACT-2026-001",
+  "version": "1.0.0",
+  "status": "DRAFT",
+  "created_at": "2026-02-15T10:00:00Z",
+  "updated_at": "2026-02-15T10:00:00Z",
+  "architect_agent": "architect-001",
+  
+  "modules": {
+    "auth_module": {
+      "interface": "IUserAuth",
+      "file_path": "src/auth/service.py",
+      "stub_path": "stubs/auth_service_stub.py",
+      "stub_version": "v1.0.0",
+      "methods": {
+        "login": {
+          "input": {
+            "username": { "type": "string", "required": true, "max_length": 50 },
+            "password": { "type": "hash_string", "required": true, "min_length": 8 }
+          },
+          "output": {
+            "success": { "type": "boolean" },
+            "token": { "type": "string", "nullable": true },
+            "expires_in": { "type": "int", "unit": "seconds" },
+            "error": { "type": "string", "nullable": true }
+          },
+          "constraints": [
+            "response_time < 500ms",
+            "max_retry = 3",
+            "token_validity = 3600s"
+          ],
+          "errors": {
+            "INVALID_CREDENTIALS": "用户名或密码错误",
+            "ACCOUNT_LOCKED": "账户已锁定",
+            "RATE_LIMITED": "请求过于频繁"
+          }
+        },
+        "logout": {
+          "input": {
+            "token": { "type": "string", "required": true }
+          },
+          "output": {
+            "success": { "type": "boolean" }
+          }
+        },
+        "refresh_token": {
+          "input": {
+            "token": { "type": "string", "required": true }
+          },
+          "output": {
+            "success": { "type": "boolean" },
+            "new_token": { "type": "string", "nullable": true },
+            "expires_in": { "type": "int" }
+          }
+        }
+      }
+    },
+    "user_module": {
+      "interface": "IUserService",
+      "file_path": "src/user/service.py",
+      "stub_path": "stubs/user_service_stub.py",
+      "stub_version": "v1.0.0",
+      "methods": {
+        "get_user_profile": {
+          "input": {
+            "user_id": { "type": "string", "required": true }
+          },
+          "output": {
+            "user_id": { "type": "string" },
+            "username": { "type": "string" },
+            "email": { "type": "string" },
+            "points": { "type": "int", "min": 0 },
+            "created_at": { "type": "datetime" }
+          },
+          "dependencies": ["auth_module.login"]
+        },
+        "update_points": {
+          "input": {
+            "user_id": { "type": "string", "required": true },
+            "amount": { "type": "int", "required": true },
+            "operation": { "type": "enum", "values": ["add", "subtract"] }
+          },
+          "output": {
+            "success": { "type": "boolean" },
+            "new_balance": { "type": "int" }
+          },
+          "business_rules": ["BR_001", "BR_002"]
+        }
+      }
+    },
+    "order_module": {
+      "interface": "IOrderService",
+      "file_path": "src/order/service.py",
+      "stub_path": "stubs/order_service_stub.py",
+      "stub_version": "v1.0.0",
+      "methods": {
+        "create_order": {
+          "input": {
+            "user_id": { "type": "string", "required": true },
+            "items": { 
+              "type": "array",
+              "items": {
+                "product_id": "string",
+                "quantity": "int"
+              }
+            }
+          },
+          "output": {
+            "order_id": { "type": "string" },
+            "status": { "type": "string" },
+            "total_amount": { "type": "float" }
+          },
+          "dependencies": ["user_module.get_user_profile", "user_module.update_points"]
+        }
+      }
+    }
+  },
+
+  "global_config": {
+    "database": {
+      "type": "PostgreSQL",
+      "version": "15.x",
+      "sandbox_column": "sandbox_id"
+    },
+    "cache": {
+      "type": "Redis",
+      "key_prefix_template": "${sandbox_id}:"
+    },
+    "auth": {
+      "strategy": "JWT",
+      "algorithm": "HS256",
+      "secret_env": "JWT_SECRET"
+    },
+    "api": {
+      "base_url": "/api/v1",
+      "rate_limit": {
+        "default": "100/minute",
+        "auth": "10/minute"
+      }
+    }
+  },
+
+  "data_dependencies": {
+    "shared_tables": [
+      {
+        "table": "users",
+        "producer": "auth_module",
+        "consumers": ["user_module", "order_module"]
+      },
+      {
+        "table": "orders",
+        "producer": "order_module",
+        "consumers": ["payment_module"]
+      }
+    ]
+  },
+
+  "change_history": []
+}

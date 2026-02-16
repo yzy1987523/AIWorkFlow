@@ -1,0 +1,85 @@
+# 技能注册表 (Skill Registry)
+# 定义 Agent 可以调用的原子化工具
+
+version: "1.0.0"
+last_updated: "2026-02-15"
+
+# ==================== 分析类技能 ====================
+analysis:
+  - skill_id: SKILL_RCA_001
+    name: "Analyze_Root_Cause"
+    description: "分析错误的根本原因"
+    category: "analysis"
+    
+    input:
+      - name: "error_log"
+        type: "string"
+        description: "完整的错误日志"
+        required: true
+    
+    output:
+      type: "RCAReport"
+      fields:
+        - name: "category"
+          description: "错误类型分类"
+        - name: "root_cause"
+          description: "根本原因描述"
+        - name: "suggested_fix"
+          description: "建议的修复方案"
+
+# ==================== 生成类技能 ====================
+generation:
+  - skill_id: SKILL_STUB_001
+    name: "Generate_Stub"
+    description: "根据契约生成可运行的接口存根文件"
+    category: "generation"
+    
+    input:
+      - name: "contract_section"
+        type: "dict"
+        description: "契约中的模块定义"
+    
+    output:
+      type: "StubFile"
+      fields:
+        - name: "file_path"
+          description: "存根文件路径"
+        - name: "content"
+          description: "文件内容"
+
+  - skill_id: SKILL_TEST_001
+    name: "Generate_Test_Cases"
+    description: "根据契约和业务规则自动生成测试用例"
+    category: "generation"
+
+# ==================== 验证类技能 ====================
+validation:
+  - skill_id: SKILL_CONTRACT_001
+    name: "Contract_Validator"
+    description: "验证实现是否符合契约定义"
+    category: "validation"
+
+# ==================== 压缩类技能 ====================
+compression:
+  - skill_id: SKILL_COMPRESS_001
+    name: "Compress_Knowledge"
+    description: "将复杂的任务日志压缩为一条可复用的免疫规则"
+    category: "compression"
+
+# ==================== 技能配置 ====================
+config:
+  rate_limits:
+    Analyze_Root_Cause: 10/hour
+    Generate_Stub: 50/hour
+  
+  timeouts:
+    Analyze_Root_Cause: 60s
+    Generate_Stub: 30s
+
+# ==================== 技能索引 ====================
+skill_index:
+  by_category:
+    analysis: ["SKILL_RCA_001"]
+    generation: ["SKILL_STUB_001", "SKILL_TEST_001"]
+    validation: ["SKILL_CONTRACT_001"]
+    compression: ["SKILL_COMPRESS_001"]

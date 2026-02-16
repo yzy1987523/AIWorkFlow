@@ -1,0 +1,63 @@
+{
+  "project": {
+    "name": "AIWorkFlow",
+    "version": "1.0.0",
+    "description": "AI编程开发工作流系统",
+    "language": "Python",
+    "framework": "FastAPI"
+  },
+
+  "agents": {
+    "main_agent": {
+      "heartbeat_interval_seconds": 300,
+      "suspending_timeout_minutes": 30,
+      "escalation_enabled": true,
+      "max_concurrent_tasks": 3
+    },
+    "sub_agent": {
+      "max_retry_count": 3,
+      "context_destroy_on_complete": true,
+      "rca_required_on_failure": true
+    }
+  },
+
+  "high_availability": {
+    "main_agent_hot_standby": true,
+    "code_edit_service_failover": true,
+    "local_fallback_enabled": true
+  },
+
+  "sandbox": {
+    "enabled": true,
+    "isolation_mode": "row_level",
+    "sandbox_column": "sandbox_id",
+    "auto_cleanup": true,
+    "cleanup_after_hours": 24
+  },
+
+  "knowledge_management": {
+    "log_retention_days": 7,
+    "summary_permanent": true,
+    "compression_ratio_target": 100,
+    "auto_injection_enabled": true
+  },
+
+  "staging": {
+    "enabled": true,
+    "database_sandbox": true,
+    "api_mock_fallback": true
+  },
+
+  "git_workflow": {
+    "main_branch": "main",
+    "feature_branch_prefix": "feature/task-",
+    "auto_merge_review": true,
+    "conflict_resolution_task": true
+  },
+
+  "thresholds": {
+    "contract_change_max_affected_tasks": 2,
+    "contract_change_max_impact_score": 15,
+    "dependency_verification_timeout_minutes": 5
+  }
+}

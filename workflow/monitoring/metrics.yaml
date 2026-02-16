@@ -1,0 +1,79 @@
+# 监控与告警配置
+
+version: "1.0.0"
+last_updated: "2026-02-15"
+
+# 指标定义
+metrics:
+  task:
+    - name: "task_total"
+      type: "gauge"
+      description: "任务总数"
+    
+    - name: "task_completed_total"
+      type: "counter"
+      description: "已完成任务总数"
+    
+    - name: "task_failed_total"
+      type: "counter"
+      description: "失败任务总数"
+    
+    - name: "task_duration_seconds"
+      type: "histogram"
+      description: "任务执行耗时"
+      buckets: [60, 300, 600, 1800, 3600]
+
+  agent:
+    - name: "agent_active_count"
+      type: "gauge"
+      description: "活跃Agent数量"
+    
+    - name: "agent_heartbeat_missing"
+      type: "counter"
+      description: "Agent心跳缺失次数"
+
+  contract:
+    - name: "contract_change_total"
+      type: "counter"
+      description: "契约变更次数"
+
+# 告警规则
+alerts:
+  task:
+    - name: "task_failure_rate_high"
+      condition: "rate(task_failed_total[5m]) / rate(task_total[5m]) > 0.2"
+      severity: "critical"
+      description: "任务失败率超过20%"
+    
+    - name: "task_stuck"
+      condition: "task_duration_seconds > 7200"
+      severity: "warning"
+      description: "任务执行超过2小时"
+
+  agent:
+    - name: "agent_heartbeat_timeout"
+      condition: "agent_heartbeat_missing > 3"
+      severity: "critical"
+      description: "Agent心跳超时"
+
+# 通知渠道
+channels:
+  email:
+    enabled: true
+    smtp_host: "smtp.example.com"
+    smtp_port: 587
+  
+  webhook:
+    enabled: true
+    url: "https://your-system.com/webhooks/alerts"
+
+# 仪表板
+dashboard:
+  name: "AI Workflow Overview"
+  panels:
+    - title: "Task Statistics"
+      type: "stat"
+      metrics:
+        - task_total{status="running"}
+        - task_total{status="done"}
+        - task_total{status="failed"}

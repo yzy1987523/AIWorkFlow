@@ -1,0 +1,103 @@
+# 业务规则定义文件
+# Business Rules Configuration
+
+version: "1.0.0"
+last_updated: "2026-02-15"
+maintained_by: "product_agent"
+
+# ==================== 认证相关规则 ====================
+authentication:
+  - id: BR_AUTH_001
+    name: "登录失败锁定"
+    description: "连续登录失败超过阈值后锁定账户"
+    category: "security"
+    
+    condition:
+      trigger: "login_attempt_failed"
+      threshold: 5
+      time_window_minutes: 15
+    
+    action:
+      type: "lock_account"
+      duration_minutes: 30
+      notify_user: true
+    
+    test_scenarios:
+      - scenario: "连续5次失败"
+        steps:
+          - action: "login"
+            data: { username: "test", password: "wrong" }
+            repeat: 5
+        expect:
+          result: "account_locked"
+          error_code: "ACCOUNT_LOCKED"
+
+# ==================== 用户相关规则 ====================
+user_management:
+  - id: BR_USER_001
+    name: "积分兑换限制"
+    description: "用户积分不足以兑换时的业务规则"
+    category: "business"
+    
+    condition:
+      trigger: "points_exchange"
+      validation: "user.points < exchange.required_points"
+    
+    action:
+      type: "reject"
+      error_code: "INSUFFICIENT_POINTS"
+      error_message: "积分不足，当前积分: {current}, 需要: {required}"
+
+# ==================== 订单相关规则 ====================
+order_management:
+  - id: BR_ORDER_001
+    name: "订单状态流转限制"
+    description: "订单状态只能单向流转"
+    category: "business"
+    
+    condition:
+      valid_transitions:
+        CREATED: ["PAID", "CANCELED"]
+        PAID: ["SHIPPED", "REFUNDED", "CANCELED"]
+        SHIPPED: ["DELIVERED", "RETURNED"]
+        DELIVERED: ["RETURNED", "COMPLETED"]
+        CANCELED: []
+        REFUNDED: []
+        RETURNED: []
+        COMPLETED: []
+    
+    action:
+      on_invalid_transition: "reject"
+      error_code: "INVALID_STATUS_TRANSITION"
+
+# ==================== 权限相关规则 ====================
+permissions:
+  - id: BR_PERM_001
+    name: "角色权限映射"
+    description: "不同角色的权限定义"
+    category: "security"
+    
+    roles:
+      admin:
+        permissions: ["*"]
+      user:
+        permissions:
+          - "profile:read"
+          - "profile:write"
+          - "order:create"
+          - "order:read"
+
+# ==================== 限流相关规则 ====================
+rate_limiting:
+  - id: BR_RATE_001
+    name: "API限流规则"
+    description: "不同API的限流配置"
+    category: "performance"
+    
+    rules:
+      default:
+        requests_per_minute: 100
+        burst: 20
+      auth_login:
+        requests_per_minute: 10
+        burst: 3

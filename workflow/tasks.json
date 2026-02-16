@@ -1,0 +1,95 @@
+{
+  "project_name": "AIWorkFlow",
+  "version": "1.0.0",
+  "created_at": "2026-02-15T10:00:00Z",
+  "updated_at": "2026-02-15T10:00:00Z",
+  
+  "task_states": {
+    "BLOCKED": "依赖项未完成",
+    "READY": "就绪等待分配",
+    "RUNNING": "子Agent处理中",
+    "SUSPENDING": "异常挂起",
+    "ESCALATED": "升级待处理",
+    "DONE": "已完成",
+    "FAILED": "失败"
+  },
+
+  "tasks": [
+    {
+      "id": "task-001",
+      "title": "用户登录核心逻辑实现",
+      "module": "auth_module",
+      "status": "READY",
+      "priority": "HIGH",
+      "weight": "CORE",
+      "dependencies": [],
+      "assigned_agent": null,
+      "created_at": "2026-02-15T10:00:00Z",
+      "started_at": null,
+      "completed_at": null,
+      "retry_count": 0,
+      "sandbox_id": null
+    },
+    {
+      "id": "task-002",
+      "title": "用户个人中心API实现",
+      "module": "user_module",
+      "status": "BLOCKED",
+      "priority": "HIGH",
+      "weight": "SERVICE",
+      "dependencies": ["task-001"],
+      "assigned_agent": null,
+      "created_at": "2026-02-15T10:00:00Z",
+      "started_at": null,
+      "completed_at": null,
+      "retry_count": 0,
+      "sandbox_id": null
+    },
+    {
+      "id": "task-003",
+      "title": "积分系统实现",
+      "module": "user_module",
+      "status": "BLOCKED",
+      "priority": "MEDIUM",
+      "weight": "SERVICE",
+      "dependencies": ["task-002"],
+      "assigned_agent": null,
+      "created_at": "2026-02-15T10:00:00Z",
+      "started_at": null,
+      "completed_at": null,
+      "retry_count": 0,
+      "sandbox_id": null
+    },
+    {
+      "id": "task-004",
+      "title": "订单创建流程实现",
+      "module": "order_module",
+      "status": "BLOCKED",
+      "priority": "HIGH",
+      "weight": "SERVICE",
+      "dependencies": ["task-002", "task-003"],
+      "assigned_agent": null,
+      "created_at": "2026-02-15T10:00:00Z",
+      "started_at": null,
+      "completed_at": null,
+      "retry_count": 0,
+      "sandbox_id": null
+    }
+  ],
+
+  "dependency_graph": {
+    "task-001": [],
+    "task-002": ["task-001"],
+    "task-003": ["task-002"],
+    "task-004": ["task-002", "task-003"]
+  },
+
+  "statistics": {
+    "total": 4,
+    "blocked": 3,
+    "ready": 1,
+    "running": 0,
+    "done": 0,
+    "failed": 0
+  }
+}

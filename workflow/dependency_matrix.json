@@ -1,0 +1,103 @@
+{
+  "version": "1.0.0",
+  "last_analyzed": "2026-02-15T10:00:00Z",
+  
+  "env_variables": {
+    "DATABASE_URL": {
+      "confidence": "HIGH",
+      "source": "explicit_config",
+      "affected_modules": ["auth_module", "user_module", "order_module"],
+      "affected_tasks": ["task-001", "task-002", "task-003", "task-004"]
+    },
+    "REDIS_HOST": {
+      "confidence": "HIGH",
+      "source": "explicit_config",
+      "affected_modules": ["auth_module"],
+      "affected_tasks": ["task-001"]
+    },
+    "JWT_SECRET": {
+      "confidence": "HIGH",
+      "source": "explicit_config",
+      "affected_modules": ["auth_module"],
+      "affected_tasks": ["task-001"]
+    },
+    "API_RATE_LIMIT": {
+      "confidence": "MEDIUM",
+      "source": "framework_injection",
+      "affected_modules": ["auth_module", "user_module"],
+      "affected_tasks": ["task-001", "task-002"],
+      "requires_confirmation": true
+    }
+  },
+
+  "shared_modules": {
+    "auth_middleware": {
+      "confidence": "HIGH",
+      "source": "explicit_import",
+      "file": "src/middleware/auth.py",
+      "consumers": ["user_module", "order_module"],
+      "affected_tasks": ["task-002", "task-004"]
+    },
+    "db_connection": {
+      "confidence": "HIGH",
+      "source": "explicit_import",
+      "file": "src/db/connection.py",
+      "consumers": ["auth_module", "user_module", "order_module"],
+      "affected_tasks": ["task-001", "task-002", "task-003", "task-004"]
+    },
+    "logger": {
+      "confidence": "LOW",
+      "source": "dynamic_injection",
+      "file": "src/utils/logger.py",
+      "consumers": ["*"],
+      "affected_tasks": ["*"],
+      "requires_confirmation": true,
+      "note": "可能被所有模块使用，需要运行时验证"
+    }
+  },
+
+  "data_dependencies": {
+    "users_table": {
+      "confidence": "HIGH",
+      "source": "schema_definition",
+      "producer": "auth_module",
+      "consumers": ["user_module", "order_module"],
+      "shared_data_config": {
+        "isolation": "row_level",
+        "sandbox_column": "sandbox_id"
+      }
+    },
+    "points_table": {
+      "confidence": "HIGH",
+      "source": "schema_definition",
+      "producer": "user_module",
+      "consumers": ["order_module"],
+      "business_rules": ["BR_001", "BR_002"]
+    }
+  },
+
+  "hidden_dependencies": {
+    "pending_verification": [
+      {
+        "item": "cache_invalidation",
+        "detected_in": "task-002",
+        "confidence": "LOW",
+        "evidence": "代码中有 @cache装饰器，但未明确依赖Redis配置",
+        "suggested_action": "确认是否依赖Redis"
+      }
+    ],
+    "verified": []
+  },
+
+  "impact_weights": {
+    "CORE": 10,
+    "SERVICE": 5,
+    "UTIL": 1
+  },
+
+  "thresholds": {
+    "max_affected_tasks_simple": 2,
+    "max_impact_score": 15,
+    "require_human_approval_score": 15
+  }
+}
